@@ -7,7 +7,10 @@ on:
 jobs:
     release:
         runs-on: ubuntu-latest
-        permissions: write-all
+        permissions:
+            contents: write # push tags + create the GitHub release
+            pull-requests: write # changesets opens the "Version Packages" PR
+            id-token: write # OIDC token for npm trusted publishing
         env:
             # Releases are driven by changesets, not commit messages — skip the
             # local git hooks when the changesets action commits the version bump.
@@ -36,6 +39,12 @@ jobs:
             - name: Install dependencies
               run: yarn install --immutable
 
+            # OIDC trusted publishing is an npm-CLI feature (>= 11.5.1); Node 24
+            # ships an older npm, and `yarn npm publish` doesn't do the OIDC token
+            # exchange — so we update npm and publish with it directly below.
+            - name: Update npm for OIDC trusted publishing
+              run: npm install --global npm@latest
+
             # When changesets are present, opens (or updates) a "Version Packages"
             # PR that bumps the version and writes the changelog. When none remain
             # — i.e. that PR has just merged — this is a no-op and we publish below.
@@ -47,21 +56,29 @@ jobs:
                   title: "chore(release): version packages"
                   commit: "chore(release): version packages"
 
-            - name: Read package version
-              id: pkg
-              run: echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
-
-            # Runs on the push that merges the version PR (no changesets left). The
-            # tag-existence guard keeps this idempotent for ordinary pushes to main.
-            - name: Tag and publish release
+            # Runs on the push that merges the version PR (no changesets left).
+            # Each action is independently guarded so the step is idempotent on
+            # ordinary pushes to main (version already published and/or tagged).
+            - name: Publish release
               if: steps.changesets.outputs.hasChangesets == 'false'
               run: |
-                  VERSION="${{ steps.pkg.outputs.version }}"
+                  PKG="$(node -p "require('./package.json').name")"
+                  VERSION="$(node -p "require('./package.json').version")"
                   TAG="v${VERSION}"
                   MAJOR="v${VERSION%%.*}"
 
+                  # Publish to npm via OIDC trusted publishing (no token) unless
+                  # this exact version is already on the registry.
+                  if npm view "${PKG}@${VERSION}" version >/dev/null 2>&1; then
+                      echo "${PKG}@${VERSION} is already published to npm."
+                  else
+                      npm publish --access public --provenance
+                  fi
+
+                  # Tag the release and move the floating major tag (e.g. v1) onto
+                  # it so consumers pinned to the major line get the update.
                   if git rev-parse -q --verify "refs/tags/${TAG}" >/dev/null; then
-                      echo "Tag ${TAG} already exists — nothing to release."
+                      echo "Tag ${TAG} already exists — skipping tag + GitHub release."
                       exit 0
                   fi
 
@@ -69,8 +86,6 @@ jobs:
                   git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
                   git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
 
-                  # Create the release tag and move the floating major tag (e.g. v1)
-                  # onto it so consumers pinned to the major line get the update.
                   git tag "${TAG}"
                   git tag -f "${MAJOR}" "${TAG}"
                   git push origin "${TAG}"
