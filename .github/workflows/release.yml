@@ -1,0 +1,36 @@
+name: Release
+
+on:
+    push:
+        branches: [main]
+
+jobs:
+    publish:
+        runs-on: ubuntu-latest
+        permissions: write-all
+        env:
+            GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+
+        steps:
+            - name: Check out code
+              uses: actions/checkout@v6
+              with:
+                  persist-credentials: false
+
+            - name: Enable corepack
+              run: corepack enable
+
+            - name: Setup Node
+              uses: actions/setup-node@v6
+              with:
+                  node-version-file: .nvmrc
+                  cache: yarn
+
+            - name: Install dependencies
+              run: yarn install --immutable
+
+            - name: Semantic release
+              uses: cycjimmy/semantic-release-action@v6
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+                  GH_TOKEN: ${{ secrets.GH_TOKEN }}
