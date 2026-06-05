@@ -1,5 +1,5 @@
 ---
-"@allons-y/template-actions": minor
+"@allons-y/template-actions": major
 ---
 
 Scaffold the GitHub Action template: ships `action.yml`, an example handler, Jest
