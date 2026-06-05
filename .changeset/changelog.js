@@ -23,8 +23,16 @@
  *   commit: a1b2c3d
  *   author: @octocat
  *
+ * "thanks" is shown only for *external* contributors — authors whose handle is
+ * not in the `maintainers` allowlist (case-insensitive). On a change co-authored
+ * by a maintainer and an outside contributor, only the outsider is thanked.
+ *
  * Config (.changeset/config.json):
- *   "changelog": ["./changelog.js", { "repo": "org/repo", "disableThanks": false }]
+ *   "changelog": ["./changelog.js", {
+ *     "repo": "org/repo",
+ *     "maintainers": ["octocat"],   // internal handles — never thanked
+ *     "disableThanks": false        // set true to drop thanks entirely
+ *   }]
  *
  * @typedef {import('@changesets/types').ChangelogFunctions} ChangelogFunctions
  */
@@ -93,31 +101,35 @@ function extractMeta(summary) {
 }
 
 /**
- * Resolve the trailing reference link (PR, else commit) and author links for a
- * changeset. Only hits the GitHub API when there's a PR or commit to look up.
+ * Resolve the trailing reference link (PR, else commit) and the change's
+ * authors for a changeset. Only hits the GitHub API when there's a PR or commit
+ * to look up. Each author carries its raw `login` (for the maintainer check)
+ * and its rendered markdown `link`.
  *
  * @param {string} repo
  * @param {{ pr?: number, commit?: string, authors: string[] }} meta
  * @param {string | undefined} changesetCommit
- * @returns {Promise<{ reference: string | null, authors: string[] }>}
+ * @returns {Promise<{ reference: string | null, authors: { login: string, link: string }[] }>}
  */
 async function resolveLinks(repo, meta, changesetCommit) {
-	let links = { pull: null, commit: null, user: null };
+	let info = { user: null, links: { pull: null, commit: null, user: null } };
 	if (meta.pr !== undefined) {
-		({ links } = await getInfoFromPullRequest({ repo, pull: meta.pr }));
+		info = await getInfoFromPullRequest({ repo, pull: meta.pr });
 	} else {
 		const commit = meta.commit || changesetCommit;
-		if (commit) ({ links } = await getInfo({ repo, commit }));
+		if (commit) info = await getInfo({ repo, commit });
 	}
+	let { links } = info;
 	// An explicit `commit:` override wins over a PR's merge commit.
 	if (meta.commit) {
 		const short = meta.commit.slice(0, 7);
 		links = { ...links, commit: `[\`${short}\`](${GITHUB_SERVER_URL}/${repo}/commit/${meta.commit})` };
 	}
+	// `author:` overrides win; otherwise fall back to the resolved commit/PR author.
 	const authors = meta.authors.length
-		? meta.authors.map((user) => `[@${user}](${GITHUB_SERVER_URL}/${user})`)
-		: links.user
-			? [links.user]
+		? meta.authors.map((login) => ({ login, link: `[@${login}](${GITHUB_SERVER_URL}/${login})` }))
+		: info.user
+			? [{ login: info.user, link: links.user }]
 			: [];
 	return { reference: links.pull || links.commit, authors };
 }
@@ -131,9 +143,13 @@ const changelogFunctions = {
 
 		const [headline, ...rest] = cleaned.split("\n").map((line) => line.trimEnd());
 
+		// Thank only external contributors — anyone not on the maintainer allowlist.
+		const maintainers = new Set((options.maintainers ?? []).map((handle) => handle.toLowerCase()));
+		const external = authors.filter((author) => !maintainers.has(author.login.toLowerCase()));
+
 		let suffix = "";
 		if (reference) suffix += ` (${reference})`;
-		if (authors.length && !(options && options.disableThanks)) suffix += ` — thanks ${authors.join(", ")}!`;
+		if (external.length && !options.disableThanks) suffix += ` — thanks ${external.map((author) => author.link).join(", ")}!`;
 
 		// Continuation lines are indented two spaces so multi-paragraph entries
 		// stay inside the list item; blank lines are preserved as paragraph breaks.
