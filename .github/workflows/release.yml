@@ -5,16 +5,23 @@ on:
         branches: [main]
 
 jobs:
-    publish:
+    release:
         runs-on: ubuntu-latest
         permissions: write-all
         env:
+            # Releases are driven by changesets, not commit messages — skip the
+            # local git hooks when the changesets action commits the version bump.
+            HUSKY: 0
+            GH_TOKEN: ${{ secrets.GH_TOKEN }}
             GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
         steps:
             - name: Check out code
               uses: actions/checkout@v6
               with:
+                  # Full history + tags so the publish step can detect whether the
+                  # current version has already been released.
+                  fetch-depth: 0
                   persist-credentials: false
 
             - name: Enable corepack
@@ -29,8 +36,44 @@ jobs:
             - name: Install dependencies
               run: yarn install --immutable
 
-            - name: Semantic release
-              uses: cycjimmy/semantic-release-action@v6
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-                  GH_TOKEN: ${{ secrets.GH_TOKEN }}
+            # When changesets are present, opens (or updates) a "Version Packages"
+            # PR that bumps the version and writes the changelog. When none remain
+            # — i.e. that PR has just merged — this is a no-op and we publish below.
+            - name: Create version PR
+              id: changesets
+              uses: changesets/action@v1
+              with:
+                  version: yarn changeset version
+                  title: "chore(release): version packages"
+                  commit: "chore(release): version packages"
+
+            - name: Read package version
+              id: pkg
+              run: echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
+            # Runs on the push that merges the version PR (no changesets left). The
+            # tag-existence guard keeps this idempotent for ordinary pushes to main.
+            - name: Tag and publish release
+              if: steps.changesets.outputs.hasChangesets == 'false'
+              run: |
+                  VERSION="${{ steps.pkg.outputs.version }}"
+                  TAG="v${VERSION}"
+                  MAJOR="v${VERSION%%.*}"
+
+                  if git rev-parse -q --verify "refs/tags/${TAG}" >/dev/null; then
+                      echo "Tag ${TAG} already exists — nothing to release."
+                      exit 0
+                  fi
+
+                  git config user.name "github-actions[bot]"
+                  git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+                  git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+
+                  # Create the release tag and move the floating major tag (e.g. v1)
+                  # onto it so consumers pinned to the major line get the update.
+                  git tag "${TAG}"
+                  git tag -f "${MAJOR}" "${TAG}"
+                  git push origin "${TAG}"
+                  git push --force origin "refs/tags/${MAJOR}"
+
+                  gh release create "${TAG}" --title "${TAG}" --generate-notes

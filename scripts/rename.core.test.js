@@ -10,6 +10,7 @@ import {
 	applyReplacements,
 	renameFiles,
 	renderTemplateFile,
+	clearChangesets,
 	renderActionInput,
 	renderActionOutput,
 	renderActionIo,
@@ -217,6 +218,48 @@ describe("renderTemplateFile", () => {
 		renderTemplateFile(src, dest, buildReplacements(VALUES));
 
 		expect(readFileSync(dest, "utf8")).toBe("owner: my-org");
+	});
+});
+
+describe("clearChangesets", () => {
+	let root;
+
+	beforeEach(() => {
+		root = mkdtempSync(join(tmpdir(), "rename-changesets-"));
+	});
+
+	afterEach(() => {
+		rmSync(root, { recursive: true, force: true });
+	});
+
+	it("removes pending changeset markdown but keeps README.md and config.json", () => {
+		const dir = join(root, ".changeset");
+		mkdirSync(dir);
+		writeFileSync(join(dir, "config.json"), "{}");
+		writeFileSync(join(dir, "README.md"), "# Changesets");
+		writeFileSync(join(dir, "happy-pandas-jump.md"), "---\n\"pkg\": minor\n---\n");
+
+		const removed = clearChangesets(root);
+
+		expect(removed).toEqual([join(".changeset", "happy-pandas-jump.md")]);
+		expect(existsSync(join(dir, "happy-pandas-jump.md"))).toBe(false);
+		expect(existsSync(join(dir, "README.md"))).toBe(true);
+		expect(existsSync(join(dir, "config.json"))).toBe(true);
+	});
+
+	it("reports would-remove paths without deleting when dryRun is set", () => {
+		const dir = join(root, ".changeset");
+		mkdirSync(dir);
+		writeFileSync(join(dir, "stale.md"), "x");
+
+		const removed = clearChangesets(root, { dryRun: true });
+
+		expect(removed).toEqual([join(".changeset", "stale.md")]);
+		expect(existsSync(join(dir, "stale.md"))).toBe(true);
+	});
+
+	it("returns an empty list when there is no .changeset directory", () => {
+		expect(clearChangesets(root)).toEqual([]);
 	});
 });
 

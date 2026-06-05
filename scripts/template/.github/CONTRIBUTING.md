@@ -21,22 +21,32 @@ yarn install
 
 ## Commit conventions
 
-Commits must follow [Conventional Commits](https://www.conventionalcommits.org), enforced by commitlint via a pre-commit hook. The commit type drives the next release via semantic-release:
+Commits follow [Conventional Commits](https://www.conventionalcommits.org), enforced by commitlint via a pre-commit hook. This keeps the history readable — but commit types no longer drive releases; versioning is handled by changesets (see below).
 
-- `fix:` → patch release
-- `feat:` → minor release
-- `feat!:` or any commit with a `BREAKING CHANGE:` footer → major release
-- `chore:`, `docs:`, `refactor:`, `test:`, `ci:`, `build:` → no release
+## Releasing with changesets
 
-If you're not sure, `fix:` is almost always a safe choice for bug fixes.
+Releases are managed by [Changesets](https://github.com/changesets/changesets). When you make a change that affects how the action behaves for consumers, add a changeset:
+
+```bash
+yarn changeset
+```
+
+Pick the bump type when prompted, write a short summary, and commit the generated file in `.changeset/` alongside your code:
+
+- **patch** — bug fixes
+- **minor** — new, backwards-compatible features
+- **major** — breaking changes
+
+Changes that don't affect consumers (docs, tests, CI, internal refactors) don't need a changeset.
 
 ## Pull requests
 
 - Open an issue first for substantive changes — small fixes can skip this.
 - Keep PRs focused. One change per PR is easier to review.
 - Update tests for any behavior change.
+- Add a changeset if your change affects consumers.
 - The CI workflow runs build, lint, and the full test suite — make sure it's green.
-- Releases are automatic: once a PR merges to `main`, semantic-release decides the next version based on commit types and publishes a tag (and updates the floating `vN` major tag).
+- Releases are automatic: once a PR merges to `main`, changesets opens (or updates) a "Version Packages" PR that applies the pending bumps and updates the changelog. Merging that PR publishes the release tag (and moves the floating `vN` major tag).
 
 ## Questions
 

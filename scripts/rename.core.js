@@ -4,7 +4,7 @@
  * {@link ./rename.js}.
  */
 
-import { readFileSync, writeFileSync, readdirSync, statSync, existsSync, mkdirSync } from "node:fs";
+import { readFileSync, writeFileSync, readdirSync, statSync, existsSync, mkdirSync, rmSync } from "node:fs";
 import { join, relative, dirname } from "node:path";
 
 /**
@@ -28,6 +28,29 @@ export function renderTemplateFile(src, dest, replacements, { dryRun = false } =
 		writeFileSync(dest, rendered);
 	}
 	return changed;
+}
+
+/**
+ * Remove the template's own pending changesets so a freshly scaffolded repo
+ * starts with a clean release history. Every `.changeset/*.md` file is deleted
+ * except `README.md` (the changesets usage guide); `config.json` is left in
+ * place. Returns the repo-relative paths that were (or, on a dry run, would be)
+ * removed.
+ *
+ * @param {string} root
+ * @param {{ dryRun?: boolean }} [opts]
+ * @returns {string[]}
+ */
+export function clearChangesets(root, { dryRun = false } = {}) {
+	const dir = join(root, ".changeset");
+	if (!existsSync(dir)) return [];
+	const removed = [];
+	for (const entry of readdirSync(dir)) {
+		if (!entry.endsWith(".md") || entry.toLowerCase() === "readme.md") continue;
+		removed.push(join(".changeset", entry));
+		if (!dryRun) rmSync(join(dir, entry), { force: true });
+	}
+	return removed;
 }
 
 /** Directories that are never walked when rewriting placeholders. */

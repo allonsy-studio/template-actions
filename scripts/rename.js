@@ -30,6 +30,7 @@ import {
 	buildContentReplacements,
 	renameFiles,
 	renderTemplateFile,
+	clearChangesets,
 	walk,
 	parseGitConfigOwner,
 	parseNoreplyHandle,
@@ -217,6 +218,12 @@ async function run(opts) {
 		if (renderTemplateFile(src, join(repoRoot, rel), replacements, { dryRun })) {
 			console.log(`  ${dryRun ? "would update" : "updated"} ${rel}`);
 		}
+	}
+
+	// Drop the template's own pending changesets so the new repo starts with a
+	// clean release history (and no dangling reference to this package's name).
+	for (const removed of clearChangesets(repoRoot, { dryRun })) {
+		console.log(`  ${dryRun ? "would remove" : "removed"} ${removed}`);
 	}
 
 	console.log(`  ${dryRun ? "would remove" : "removed"} scripts/`);

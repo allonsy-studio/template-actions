@@ -4,7 +4,7 @@
 
 A starting point for ESM, bundled GitHub Actions — ships with `action.yml`, an
 example handler, Jest (with manual `@actions/*` mocks), ESLint/Prettier,
-semantic-release, Renovate, and issue/PR templates, plus a one-shot setup CLI
+Changesets, Renovate, and issue/PR templates, plus a one-shot setup CLI
 that wires it all to your action.
 
 ## Use this template
@@ -19,7 +19,9 @@ that wires it all to your action.
    - Supply `--name`, `--description`, `--owner`, and/or `--author` to skip the
      matching prompts.
 4. Edit `main.js` to implement your action's logic.
-5. Commit and push — semantic-release handles versioning and publishing.
+5. Run `yarn changeset` to record any release-worthy change, then commit and
+   push — [Changesets](https://github.com/changesets/changesets) handles
+   versioning, the changelog, and tagging the release.
 
 ## What the setup does
 
