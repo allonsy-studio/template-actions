@@ -4,16 +4,17 @@ on:
     push:
         branches: [main]
 
+permissions:
+    contents: write # push tags + create the GitHub release
+    pull-requests: write # changesets opens the "Version Packages" PR
+    id-token: write # OIDC token for npm trusted publishing
+
 jobs:
     release:
         runs-on: ubuntu-latest
-        permissions:
-            contents: write # push tags + create the GitHub release
-            pull-requests: write # changesets opens the "Version Packages" PR
-            id-token: write # OIDC token for npm trusted publishing
         env:
-            # Releases are driven by changesets, not commit messages — skip the
-            # local git hooks when the changesets action commits the version bump.
+            # Releases are changeset-driven, not commit-driven — skip the local
+            # git hooks when the changesets action commits the version bump.
             HUSKY: 0
             GH_TOKEN: ${{ secrets.GH_TOKEN }}
             GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
@@ -22,10 +23,10 @@ jobs:
             - name: Check out code
               uses: actions/checkout@v6
               with:
-                  # Full history + tags so the publish step can detect whether the
-                  # current version has already been released.
+                  # Full history + tags to detect prior releases, and persist the
+                  # PAT so the publish step can push tags without re-auth.
                   fetch-depth: 0
-                  persist-credentials: false
+                  token: ${{ secrets.GH_TOKEN }}
 
             - name: Enable corepack
               run: corepack enable
@@ -39,16 +40,15 @@ jobs:
             - name: Install dependencies
               run: yarn install --immutable
 
-            # OIDC trusted publishing is an npm-CLI feature (>= 11.5.1); Node 24
-            # ships an older npm, and `yarn npm publish` doesn't do the OIDC token
-            # exchange — so we update npm and publish with it directly below.
+            # OIDC trusted publishing needs npm >= 11.5.1 (newer than Node 24
+            # ships), and `yarn npm publish` doesn't do the OIDC token exchange.
             - name: Update npm for OIDC trusted publishing
               run: npm install --global npm@latest
 
-            # When changesets are present, opens (or updates) a "Version Packages"
-            # PR that bumps the version and writes the changelog. When none remain
-            # — i.e. that PR has just merged — this is a no-op and we publish below.
-            - name: Create version PR
+            # With changesets pending, opens (or updates) the "Version Packages"
+            # PR. Once that PR merges (none pending), this is a no-op and we
+            # publish below.
+            - name: Version
               id: changesets
               uses: changesets/action@v1
               with:
@@ -56,10 +56,9 @@ jobs:
                   title: "chore(release): version packages"
                   commit: "chore(release): version packages"
 
-            # Runs on the push that merges the version PR (no changesets left).
-            # Each action is independently guarded so the step is idempotent on
-            # ordinary pushes to main (version already published and/or tagged).
-            - name: Publish release
+            # Runs on the push that merges the version PR. The npm and tag checks
+            # are independent so the step is a safe no-op on every other push.
+            - name: Publish
               if: steps.changesets.outputs.hasChangesets == 'false'
               run: |
                   PKG="$(node -p "require('./package.json').name")"
@@ -67,28 +66,17 @@ jobs:
                   TAG="v${VERSION}"
                   MAJOR="v${VERSION%%.*}"
 
-                  # Publish to npm via OIDC trusted publishing (no token) unless
-                  # this exact version is already on the registry.
-                  if npm view "${PKG}@${VERSION}" version >/dev/null 2>&1; then
-                      echo "${PKG}@${VERSION} is already published to npm."
-                  else
-                      npm publish --access public --provenance
-                  fi
+                  # Publish to npm via OIDC (no token) unless already on the registry.
+                  npm view "${PKG}@${VERSION}" version >/dev/null 2>&1 \
+                      || npm publish --access public --provenance
 
                   # Tag the release and move the floating major tag (e.g. v1) onto
-                  # it so consumers pinned to the major line get the update.
+                  # it, unless this version is already tagged.
                   if git rev-parse -q --verify "refs/tags/${TAG}" >/dev/null; then
-                      echo "Tag ${TAG} already exists — skipping tag + GitHub release."
-                      exit 0
+                      echo "${TAG} already tagged."
+                  else
+                      git tag "${TAG}"
+                      git tag -f "${MAJOR}" "${TAG}"
+                      git push origin "${TAG}" "+refs/tags/${MAJOR}"
+                      gh release create "${TAG}" --title "${TAG}" --generate-notes
                   fi
-
-                  git config user.name "github-actions[bot]"
-                  git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-                  git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-
-                  git tag "${TAG}"
-                  git tag -f "${MAJOR}" "${TAG}"
-                  git push origin "${TAG}"
-                  git push --force origin "refs/tags/${MAJOR}"
-
-                  gh release create "${TAG}" --title "${TAG}" --generate-notes
