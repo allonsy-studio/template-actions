@@ -2,5 +2,5 @@
 	"$schema": "https://unpkg.com/@changesets/config@3.1.4/schema.json",
 	"access": "public",
 	"baseBranch": "main",
-	"changelog": ["@changesets/changelog-github", { "repo": "{{ OWNER }}/{{ ACTION_NAME }}" }]
+	"changelog": ["./changelog.js", { "repo": "{{ OWNER }}/{{ ACTION_NAME }}" }]
 }

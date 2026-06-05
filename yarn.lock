@@ -25,8 +25,8 @@ __metadata:
   resolution: "@allons-y/template-actions@workspace:."
   dependencies:
     "@allons-y/envoy": "npm:^1.1.0"
-    "@changesets/changelog-github": "npm:^0.7.0"
     "@changesets/cli": "npm:^2.31.0"
+    "@changesets/get-github-info": "npm:^0.8.0"
     "@clack/prompts": "npm:^1.5.1"
     "@commitlint/cli": "npm:^21.0.1"
     "@commitlint/config-conventional": "npm:^21.0.2"
@@ -473,17 +473,6 @@ __metadata:
   dependencies:
     "@changesets/types": "npm:^6.1.0"
   checksum: 10c0/6a6fb315ffb2266fcb8f32ae9a60ccdb5436e52350a2f53beacf9822d3355f9052aba5001a718e12af472b4a8fabd69b408d0b11c02ac909ba7a183d27a9f7fd
-  languageName: node
-  linkType: hard
-
-"@changesets/changelog-github@npm:^0.7.0":
-  version: 0.7.0
-  resolution: "@changesets/changelog-github@npm:0.7.0"
-  dependencies:
-    "@changesets/get-github-info": "npm:^0.8.0"
-    "@changesets/types": "npm:^6.1.0"
-    dotenv: "npm:^8.1.0"
-  checksum: 10c0/8054f8d5057e79eccf6658712603c9df04906f6b9c7a8b3581e63d178328ca9ba7cb27e4f2241115c3c3430099dd92ebdea097be86921d0a3cd0d07e06e896eb
   languageName: node
   linkType: hard
 
@@ -2950,13 +2939,6 @@ __metadata:
   dependencies:
     is-obj: "npm:^2.0.0"
   checksum: 10c0/93f0d343ef87fe8869320e62f2459f7e70f49c6098d948cc47e060f4a3f827d0ad61e83cb82f2bd90cd5b9571b8d334289978a43c0f98fea4f0e99ee8faa0599
-  languageName: node
-  linkType: hard
-
-"dotenv@npm:^8.1.0":
-  version: 8.6.0
-  resolution: "dotenv@npm:8.6.0"
-  checksum: 10c0/6750431dea8efbd54b9f2d9681b04e1ccc7989486461dcf058bb708d9e3d63b04115fcdf8840e38ad1e24a4a2e1e7c1560626c5e3ac7bc09371b127c49e2d45f
   languageName: node
   linkType: hard
 
