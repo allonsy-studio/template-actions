@@ -51,7 +51,9 @@ export default defineConfig([
 		},
 	},
 	{
-		files: ["**/(!package).json"],
+		// All JSON except package.json, which has its own jsonc block below.
+		files: ["**/*.json"],
+		ignores: ["**/package.json"],
 		plugins: { json },
 		language: "json/json",
 		extends: ["json/recommended"],

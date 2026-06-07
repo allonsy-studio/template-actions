@@ -1,6 +1,16 @@
 {
 	"$schema": "https://docs.renovatebot.com/renovate-schema.json",
 	"baseBranchPatterns": ["main"],
+	"customManagers": [
+		{
+			"customType": "regex",
+			"datasourceTemplate": "npm",
+			"depNameTemplate": "@changesets/config",
+			"description": "Keep the $schema pin in .changeset/config.json in sync with @changesets/config",
+			"managerFilePatterns": ["/(^|/)\\.changeset/config\\.json$/"],
+			"matchStrings": ["@changesets/config@(?<currentValue>[\\d.]+)/schema\\.json"]
+		}
+	],
 	"extends": ["config:best-practices", "group:githubArtifactActions"],
 	"labels": ["dependencies", "renovate"],
 	"lockFileMaintenance": {
@@ -25,8 +35,8 @@
 			"matchPackageNames": ["eslint", "typescript-eslint", "@eslint/*", "eslint-plugin-*"]
 		},
 		{
-			"groupName": "semantic-release ecosystem",
-			"matchPackageNames": ["semantic-release", "@semantic-release/*"]
+			"groupName": "changesets ecosystem",
+			"matchPackageNames": ["@changesets/*"]
 		}
 	],
 	"postUpdateOptions": ["yarnDedupeHighest"],
