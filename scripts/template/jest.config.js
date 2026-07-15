@@ -16,8 +16,9 @@ export default {
 		"^@actions/github$": "<rootDir>/__mocks__/@actions/github.js",
 	},
 	// Cover the action's logic (src/main.js); the entry shell (src/index.js)
-	// runs at action runtime rather than under test, and dist/ is generated.
-	collectCoverageFrom: ["src/*.js", "!src/index.js", "!src/*.test.js", "!**/node_modules/**", "!dist/**"],
+	// runs at action runtime rather than under test, and dist/ is generated
+	// (gitignored — only exists after `yarn build`).
+	collectCoverageFrom: ["src/**/*.js", "!src/index.js", "!src/**/*.test.js", "!**/node_modules/**"],
 	coverageDirectory: "./coverage",
 	coverageReporters: isCI ? ["cobertura", "json"] : ["text", "text-summary"],
 	coverageThreshold: {

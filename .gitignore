@@ -60,6 +60,11 @@ web_modules/
 .env.*
 !.env.example
 
+# Bundled action output — built at release time and attached to the release
+# tag/npm tarball, never committed to main (see the "Architecture" section of
+# the README).
+dist
+
 # Cache files
 .cache
 .cache/

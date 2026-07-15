@@ -18,15 +18,17 @@ yarn install
 | `yarn coverage` | Run tests with coverage. Locally, prints a table. |
 | `yarn lint`     | Run prettier, eslint, and markdownlint.           |
 | `yarn format`   | Auto-fix lint and formatting issues.               |
-| `yarn build`    | Bundle `src/index.js` into `dist/index.js`.        |
+| `yarn build`    | Bundle `src/index.js` into `dist/index.mjs` (local smoke-test only). |
 
 ## Architecture
 
-Source lives in `src/`; `dist/index.js` is a generated, dependency-free bundle produced by `yarn build` (see `rollup.config.js`). GitHub runs the packaged action's `dist/index.js` directly with no install step, so **`dist/` is committed, not gitignored** — after touching anything under `src/`, run `yarn build` and commit the updated `dist/`. CI (`testing.yml`) rebuilds and fails if `dist/` doesn't match `src/`, so a stale bundle can't merge unnoticed.
+Source lives in `src/`; `dist/index.mjs` is a generated, dependency-free bundle produced by `yarn build` (see the `build` script — [`@vercel/ncc`](https://github.com/vercel/ncc), no config file needed). GitHub runs `dist/index.mjs` directly with no install step for `uses: {{OWNER}}/{{ACTION_NAME}}@vX`, but **`dist/` is gitignored — it is never committed to `main`**. PR CI (`linting.yml`) runs `yarn build` to confirm the bundle still compiles; the release workflow (`release.yml`) is the only place that commits it, and only to a commit reachable solely from the release tag (`main` never sees it). The same bundle ships in the npm tarball via `package.json`'s `files` allowlist, independent of `.gitignore`.
 
 - `src/index.js` — entry shell: reads the `token` input, builds the octokit client, calls `main()`, maps a thrown error to `core.setFailed()`.
 - `src/main.js` — the action's actual logic.
 - `src/main.test.js` — jest coverage for `main.js`.
+
+The `.mjs` extension is load-bearing, not stylistic: this package is `"type": "module"`, and `.mjs` forces ESM regardless of the nearest `package.json`'s `"type"` field, so the bundle doesn't depend on (or need) ncc's auxiliary `dist/package.json` — the build script deletes it after renaming the bundle.
 
 ## Commit conventions
 
