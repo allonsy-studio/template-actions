@@ -4,8 +4,6 @@ on:
     pull_request:
         types: [opened, synchronize, reopened]
 
-# Least privilege at the workflow level; jobs that need write scopes grant
-# them individually below.
 permissions:
     contents: read
 
@@ -47,7 +45,7 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - name: Check out code
-              uses: actions/checkout@v6
+              uses: actions/checkout@v7
               with:
                   persist-credentials: false
 
@@ -55,7 +53,7 @@ jobs:
               run: corepack enable
 
             - name: Setup Node
-              uses: actions/setup-node@v6
+              uses: actions/setup-node@v7
               with:
                   node-version-file: .nvmrc
                   cache: yarn
@@ -63,11 +61,8 @@ jobs:
             - name: Install dependencies
               run: yarn install --immutable
 
-            # dist/ is never committed (built and attached at release time
-            # instead — see release.yml) — this just proves the bundle still
-            # compiles so a release can't break on an unexercised build. Only
-            # present once the repo has been renamed into a real action; the
-            # template repository itself has nothing to bundle.
+            # dist is built & attached at release; this
+            # validates the bundle compiles with no errors
             - name: Build
               if: hashFiles('action.yml') != ''
               run: yarn build

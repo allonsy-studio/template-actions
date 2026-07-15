@@ -22,7 +22,7 @@ yarn install
 
 ## Architecture
 
-Source lives in `src/`; `dist/index.mjs` is a generated, dependency-free bundle produced by `yarn build` (see the `build` script — [`@vercel/ncc`](https://github.com/vercel/ncc), no config file needed). GitHub runs `dist/index.mjs` directly with no install step for `uses: {{OWNER}}/{{ACTION_NAME}}@vX`, but **`dist/` is gitignored — it is never committed to `main`**. PR CI (`linting.yml`) runs `yarn build` to confirm the bundle still compiles; the release workflow (`release.yml`) is the only place that commits it, and only to a commit reachable solely from the release tag (`main` never sees it). The same bundle ships in the npm tarball via `package.json`'s `files` allowlist, independent of `.gitignore`.
+Developer code lives in `src/`; `dist/index.mjs` is a generated, dependency-free bundle produced by `yarn build` (see the `build` script). GitHub runs compiled assets with no install step for `uses: {{OWNER}}/{{ACTION_NAME}}@vX`. Compiled assets are not committed to `main`. PR CI (`linting.yml`) runs `yarn build` to confirm the bundle still compiles; the release workflow (`release.yml`) is the only place that commits it, and only to a commit reachable by the release tag (`main` never sees it). The same bundle ships in the npm tarball via `package.json`'s `files` allowlist, independent of `.gitignore`.
 
 - `src/index.js` — entry shell: reads the `token` input, builds the octokit client, calls `main()`, maps a thrown error to `core.setFailed()`.
 - `src/main.js` — the action's actual logic.
