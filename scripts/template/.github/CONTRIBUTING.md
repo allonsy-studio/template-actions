@@ -13,11 +13,20 @@ yarn install
 ## Common commands
 
 | Command         | What it does                                      |
-| --------------- | ------------------------------------------------- |
+| --------------- | -------------------------------------------------- |
 | `yarn test`     | Run the Jest test suite.                          |
 | `yarn coverage` | Run tests with coverage. Locally, prints a table. |
 | `yarn lint`     | Run prettier, eslint, and markdownlint.           |
-| `yarn format`   | Auto-fix lint and formatting issues.              |
+| `yarn format`   | Auto-fix lint and formatting issues.               |
+| `yarn build`    | Bundle `src/index.js` into `dist/index.js`.        |
+
+## Architecture
+
+Source lives in `src/`; `dist/index.js` is a generated, dependency-free bundle produced by `yarn build` (see `rollup.config.js`). GitHub runs the packaged action's `dist/index.js` directly with no install step, so **`dist/` is committed, not gitignored** — after touching anything under `src/`, run `yarn build` and commit the updated `dist/`. CI (`testing.yml`) rebuilds and fails if `dist/` doesn't match `src/`, so a stale bundle can't merge unnoticed.
+
+- `src/index.js` — entry shell: reads the `token` input, builds the octokit client, calls `main()`, maps a thrown error to `core.setFailed()`.
+- `src/main.js` — the action's actual logic.
+- `src/main.test.js` — jest coverage for `main.js`.
 
 ## Commit conventions
 

@@ -29,6 +29,21 @@ jobs:
             - name: Install dependencies
               run: yarn install --immutable
 
+            # Only present once the repo has been renamed into a real action;
+            # the template repository itself has nothing to bundle.
+            - name: Build
+              if: hashFiles('action.yml') != ''
+              run: yarn build
+
+            - name: Verify dist/ is up to date
+              if: hashFiles('action.yml') != ''
+              run: |
+                  if [ -n "$(git status --porcelain dist)" ]; then
+                    echo "::error::dist/ is out of date with the source. Run 'yarn build' and commit the result."
+                    git diff dist
+                    exit 1
+                  fi
+
             - name: Run test suite with coverage
               run: yarn coverage
 

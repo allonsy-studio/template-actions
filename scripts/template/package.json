@@ -18,10 +18,10 @@
 		"url": "https://github.com/{{ OWNER }}/{{ ACTION_NAME }}/issues"
 	},
 	"type": "module",
-	"main": "index.js",
+	"main": "dist/index.js",
 	"files": [
-		"index.js",
-		"main.js",
+		"dist/**/*",
+		"src/**/*",
 		"action.yml",
 		".github/*.md",
 		"README.md",
@@ -30,6 +30,7 @@
 		"LICENSE"
 	],
 	"scripts": {
+		"build": "rollup --config rollup.config.js",
 		"changeset": "changeset",
 		"coverage": "yarn test --coverage",
 		"format": "yarn lint --fix",
@@ -53,6 +54,8 @@
 		"@eslint/json": "^1.2.0",
 		"@eslint/markdown": "^8.0.2",
 		"@octokit/core": "^7.0.6",
+		"@rollup/plugin-commonjs": "^28.0.0",
+		"@rollup/plugin-node-resolve": "^16.0.0",
 		"@stylistic/eslint-plugin": "^2.13.0",
 		"eslint": "^10.4.1",
 		"eslint-config-prettier": "^10.1.8",
@@ -63,7 +66,8 @@
 		"husky": "^9.1.7",
 		"jest": "^30.4.2",
 		"lint-staged": "^17.0.4",
-		"prettier": "^3.0.0"
+		"prettier": "^3.0.0",
+		"rollup": "^4.0.0"
 	},
 	"keywords": [
 		"actions",

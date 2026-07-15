@@ -15,9 +15,9 @@ export default {
 		"^@actions/core$": "<rootDir>/__mocks__/@actions/core.js",
 		"^@actions/github$": "<rootDir>/__mocks__/@actions/github.js",
 	},
-	// Cover the action's logic (main.js); the entry shell (index.js) and config
-	// files run at action runtime rather than under test.
-	collectCoverageFrom: ["*.js", "!*.config.js", "!.*.js", "!index.js", "!*.test.js", "!**/node_modules/**"],
+	// Cover the action's logic (src/main.js); the entry shell (src/index.js)
+	// runs at action runtime rather than under test, and dist/ is generated.
+	collectCoverageFrom: ["src/*.js", "!src/index.js", "!src/*.test.js", "!**/node_modules/**", "!dist/**"],
 	coverageDirectory: "./coverage",
 	coverageReporters: isCI ? ["cobertura", "json"] : ["text", "text-summary"],
 	coverageThreshold: {
