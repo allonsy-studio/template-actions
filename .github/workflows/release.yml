@@ -16,23 +16,22 @@ jobs:
             # Releases are changeset-driven, not commit-driven — skip the local
             # git hooks when the changesets action commits the version bump.
             HUSKY: 0
-            GH_TOKEN: ${{ secrets.GH_TOKEN }}
-            GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+            GH_TOKEN: ${{ secrets.PAC_GITHUB }}
+            GITHUB_TOKEN: ${{ secrets.PAC_GITHUB }}
 
         steps:
             - name: Check out code
-              uses: actions/checkout@v6
+              uses: actions/checkout@v7
               with:
                   # Full history + tags to detect prior releases, and persist the
                   # PAT so the publish step can push tags without re-auth.
                   fetch-depth: 0
-                  token: ${{ secrets.GH_TOKEN }}
 
             - name: Enable corepack
               run: corepack enable
 
             - name: Setup Node
-              uses: actions/setup-node@v6
+              uses: actions/setup-node@v7
               with:
                   node-version-file: .nvmrc
                   cache: yarn
