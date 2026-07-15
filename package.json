@@ -5,7 +5,7 @@
 		"registry": "https://registry.npmjs.org/"
 	},
 	"name": "@allons-y/template-actions",
-	"version": "0.0.0",
+	"version": "1.0.0",
 	"description": "A template repository for the creation of new GitHub Actions.",
 	"license": "MPL-2.0",
 	"author": "Cassondra Roberts <castastrophe@users.noreply.github.com> (https://allons-y.studio)",
