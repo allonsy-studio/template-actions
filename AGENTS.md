@@ -48,13 +48,13 @@ yarn rename    # the scaffolding CLI (--dry-run to preview)
 ## Testing
 
 `@actions/core` and `@actions/github` resolve to hand-written manual mocks in
-[`__mocks__/`](__mocks__/): don't reach for `jest.mock()` / `unstable_mockModule`
+[`__mocks__/`](__mocks__/). Don't reach for `jest.mock()` / `unstable_mockModule`
 for those two.
 
 ## Conventions
 
 - Keep code self-documenting. When a comment is warranted, keep it brief and explain
-  only the *why* the code can't show: never restate what the code does.
+  only the *why* the code can't show; never restate what the code does.
 - husky + lint-staged run on commit and commitlint checks the message. Don't bypass
   with `--no-verify`.
 - `prepare` runs `envoy`, so a missing root `~/.env` is tolerated, not fatal.
