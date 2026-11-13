@@ -28,20 +28,22 @@
 		"LICENSE"
 	],
 	"scripts": {
-		"changeset": "changeset",
+		"changeset": "opx release add",
 		"ci": "yarn format",
 		"coverage": "yarn test --coverage",
 		"format": "yarn lint --fix",
 		"lint": "eslint --no-error-on-unmatched-pattern --no-warn-ignored --cache '**/*'",
 		"precommit": "lint-staged",
 		"prepare": "husky && envoy || true",
+		"release": "opx release publish",
 		"rename": "node scripts/rename.js",
-		"test": "node --experimental-vm-modules $(yarn bin jest)"
+		"test": "node --experimental-vm-modules $(yarn bin jest)",
+		"version": "opx release version && yarn install --mode update-lockfile"
 	},
 	"devDependencies": {
 		"@allons-y/envoy": "^1.1.0",
-		"@changesets/cli": "^2.31.0",
-		"@changesets/get-github-info": "^0.8.0",
+		"@allons-y/opx-cli": "^0.2.0",
+		"@allons-y/opx-release": "^0.1.1",
 		"@clack/prompts": "^1.5.1",
 		"@commitlint/cli": "^21.0.1",
 		"@commitlint/config-conventional": "^21.0.2",
