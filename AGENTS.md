@@ -65,6 +65,8 @@ Conventional Commits. Releases run on Changesets: `yarn changeset` for anything 
 changes what a scaffolded repo receives, since that's the consumer-visible surface.
 Never hand-edit `CHANGELOG.md` or the `version` field in `package.json`.
 
+Pull requests are squash-merged: the PR title becomes the commit subject & the commit messages its body, so the title must be a valid Conventional Commits subject.
+
 Fill in [`.github/PULL_REQUEST_TEMPLATE.md`](.github/PULL_REQUEST_TEMPLATE.md); see
 [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md) for the full flow.
 
