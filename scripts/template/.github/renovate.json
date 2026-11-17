@@ -40,6 +40,6 @@
 		}
 	],
 	"postUpdateOptions": ["yarnDedupeHighest"],
-	"rebaseWhen": "behind-base-branch",
+	"rebaseWhen": "conflicted",
 	"reviewers": ["{{ ACTION_AUTHOR }}"]
 }
